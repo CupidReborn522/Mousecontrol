@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Dashboard | Emotiv Control</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <main class="dashboard">
+        <header>
+            <h1>NEURAL<span>DASHBOARD</span></h1>
+            <div class="header-actions">
+                <button id="open-config" class="btn-icon glass" title="API Configuration">⚙️</button>
+                <div id="connection-status" class="status-badge disconnected">
+                    <span class="dot"></span>
+                    <span class="text">Headset Disconnected</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Config Modal -->
+        <div id="config-modal" class="modal-overlay hidden">
+            <div class="modal glass">
+                <h3>API Configuration</h3>
+                <p class="modal-desc">Enter your Emotiv Cortex credentials. These will be saved locally in <code>config.json</code>.</p>
+                <div class="input-group">
+                    <label>Client ID</label>
+                    <input type="text" id="client-id" placeholder="Enter Client ID">
+                </div>
+                <div class="input-group">
+                    <label>Client Secret</label>
+                    <input type="password" id="client-secret" placeholder="Enter Client Secret">
+                </div>
+                <div class="modal-actions">
+                    <button id="close-config" class="btn-secondary">Cancel</button>
+                    <button id="save-config" class="btn-primary">Save & Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <section class="control-panel glass">
+            <div class="control-header">
+                <h2>System Control</h2>
+                <div class="toggle-container">
+                    <span class="toggle-label">Mouse Control</span>
+                    <label class="switch">
+                        <input type="checkbox" id="mouse-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="settings">
+                <div class="setting-item">
+                    <label for="speed-range">Movement Speed</label>
+                    <input type="range" id="speed-range" min="1" max="100" value="20">
+                    <span id="speed-value">20px</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="mapping-panel glass">
+            <div class="control-header">
+                <h2>Command Mappings</h2>
+                <button id="save-mappings-btn" class="btn-primary" style="font-size: 0.8rem; padding: 5px 15px;">Apply</button>
+            </div>
+            <div class="mapping-grid">
+                <div class="mapping-item"><label>Move Up</label><select id="map-moveUp" class="mapping-select"></select></div>
+                <div class="mapping-item"><label>Move Down</label><select id="map-moveDown" class="mapping-select"></select></div>
+                <div class="mapping-item"><label>Move Left</label><select id="map-moveLeft" class="mapping-select"></select></div>
+                <div class="mapping-item"><label>Move Right</label><select id="map-moveRight" class="mapping-select"></select></div>
+                <div class="mapping-item"><label>Left Click</label><select id="map-leftClick" class="mapping-select"></select></div>
+                <div class="mapping-item"><label>Right Click</label><select id="map-rightClick" class="mapping-select"></select></div>
+            </div>
+        </section>
+
+        <section class="data-grids">
+            <div class="card glass mental-commands">
+                <h3>Mental Commands</h3>
+                <div class="command-bars">
+                    <div class="command-item" id="cmd-push">
+                        <label>Push</label>
+                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    </div>
+                    <div class="command-item" id="cmd-pull">
+                        <label>Pull</label>
+                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    </div>
+                    <div class="command-item" id="cmd-left">
+                        <label>Left</label>
+                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    </div>
+                    <div class="command-item" id="cmd-right">
+                        <label>Right</label>
+                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card glass activity-log">
+                <h3>Activity Log</h3>
+                <div id="log-container" class="log-content">
+                    <div class="log-entry system">System initialized. Waiting for headset...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
