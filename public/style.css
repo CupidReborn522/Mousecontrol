@@ -429,3 +429,50 @@ button {
 .hidden {
     display: none !important;
 }
+
+/* Test Panel */
+.test-panel {
+    margin-top: 1rem;
+}
+
+.test-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.arrow-pad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.arrow-row {
+    display: flex;
+    gap: 10px;
+}
+
+.arrow-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    color: var(--accent-cyan);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    user-select: none;
+    cursor: pointer;
+}
+
+.arrow-btn:active, .arrow-btn:hover, .arrow-btn.active {
+    background: var(--accent-cyan);
+    color: #000;
+    box-shadow: 0 0 15px var(--accent-cyan);
+    transform: scale(0.95);
+}

@@ -183,6 +183,40 @@ speedRange.addEventListener('change', (e) => {
     socket.emit('update-speed', e.target.value);
 });
 
+// Test Panel Arrows Logic
+const arrowBtns = {
+    ArrowUp: document.getElementById('btn-up'),
+    ArrowDown: document.getElementById('btn-down'),
+    ArrowLeft: document.getElementById('btn-left'),
+    ArrowRight: document.getElementById('btn-right')
+};
+
+function emitMove(direction) {
+    socket.emit('test-move', direction);
+}
+
+if (arrowBtns.ArrowUp) {
+    arrowBtns.ArrowUp.addEventListener('click', () => emitMove('up'));
+    arrowBtns.ArrowDown.addEventListener('click', () => emitMove('down'));
+    arrowBtns.ArrowLeft.addEventListener('click', () => emitMove('left'));
+    arrowBtns.ArrowRight.addEventListener('click', () => emitMove('right'));
+
+    window.addEventListener('keydown', (e) => {
+        if (arrowBtns[e.key]) {
+            e.preventDefault();
+            arrowBtns[e.key].classList.add('active');
+            const dir = e.key.replace('Arrow', '').toLowerCase();
+            emitMove(dir);
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (arrowBtns[e.key]) {
+            arrowBtns[e.key].classList.remove('active');
+        }
+    });
+}
+
 // Helper Functions
 function addLog(message, type = 'system') {
     const entry = document.createElement('div');

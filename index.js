@@ -163,6 +163,29 @@ io.on('connection', (socket) => {
         io.emit('status-update', { moveSpeed });
     });
 
+    let lastSyncTime = 0;
+    
+    socket.on('test-move', async (direction) => {
+        // Obtener la posición física una vez por cada "ráfaga" de movimientos
+        // Si mantienes la tecla pulsada, usa la posición calculada sin latencia
+        try {
+            if (Date.now() - lastSyncTime > 1000) {
+                const pos = await mouse.getMousePosition();
+                mouse.currentX = pos.x;
+                mouse.currentY = pos.y;
+            }
+        } catch (e) {
+            console.error("Error syncing mouse:", e);
+        }
+        
+        lastSyncTime = Date.now();
+
+        if (direction === 'up') mouse.moveRelative(0, -moveSpeed);
+        if (direction === 'down') mouse.moveRelative(0, moveSpeed);
+        if (direction === 'left') mouse.moveRelative(-moveSpeed, 0);
+        if (direction === 'right') mouse.moveRelative(moveSpeed, 0);
+    });
+
     socket.on('save-mappings', (newMappings) => {
         console.log("Saving new mappings...");
         config.mappings = { ...config.mappings, ...newMappings };

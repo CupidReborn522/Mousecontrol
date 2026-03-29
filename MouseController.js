@@ -6,6 +6,17 @@ class MouseController {
         this.currentX = 0;
         this.currentY = 0;
         this.platform = os.platform(); // 'win32', 'darwin', etc.
+        
+        if (this.platform === 'win32') {
+            const { spawn } = require('child_process');
+            this.psProcess = spawn('powershell', ['-NoProfile', '-Command', '-']);
+            this.psProcess.stdin.write('Add-Type -AssemblyName System.Windows.Forms\n');
+            this.psProcess.stdin.write('Add-Type -MemberDefinition \'"[DllImport(""user32.dll"")] public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);"\' -Name Win32 -Namespace Native\n');
+            // Escapar las comillas en PowerShell inline puede ser engañoso, usamos un here-string o simplemente 
+            // no guardamos el mouse_event en el psProcess sino que usamos exec para clics si click no es cuellos de botella.
+            // Los clics no son el cuello de botella, el movimiento sí. Por lo que dejaremos los clics con exec() convencional por simplicidad.
+        }
+
         this.init();
     }
 
@@ -53,8 +64,12 @@ except Exception:
 
     moveMouse(x, y) {
         if (this.platform === 'win32') {
-            const cmd = `powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y})"`;
-            exec(cmd);
+            if (this.psProcess && !this.psProcess.stdin.destroyed) {
+                this.psProcess.stdin.write(`[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y})\n`);
+            } else {
+                const cmd = `powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y})"`;
+                exec(cmd);
+            }
         } else if (this.platform === 'darwin') {
             const pyScript = `import ctypes
 CG = ctypes.cdll.LoadLibrary('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics')
