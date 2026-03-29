@@ -13,7 +13,9 @@ class CortexClient {
 
     connect() {
         return new Promise((resolve, reject) => {
-            this.socket = new WebSocket('wss://localhost:6868');
+            this.socket = new WebSocket('wss://localhost:6868', {
+                rejectUnauthorized: false
+            });
             
             this.socket.on('error', (error) => {
                 reject(new Error("Cortex API connection failed. Is EMOTIV Launcher running?"));
