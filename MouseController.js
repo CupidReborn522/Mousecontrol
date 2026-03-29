@@ -12,9 +12,30 @@ class MouseController {
             this.psProcess = spawn('powershell', ['-NoProfile', '-Command', '-']);
             this.psProcess.stdin.write('Add-Type -AssemblyName System.Windows.Forms\n');
             this.psProcess.stdin.write('Add-Type -MemberDefinition \'"[DllImport(""user32.dll"")] public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);"\' -Name Win32 -Namespace Native\n');
-            // Escapar las comillas en PowerShell inline puede ser engañoso, usamos un here-string o simplemente 
-            // no guardamos el mouse_event en el psProcess sino que usamos exec para clics si click no es cuellos de botella.
-            // Los clics no son el cuello de botella, el movimiento sí. Por lo que dejaremos los clics con exec() convencional por simplicidad.
+        } else if (this.platform === 'darwin') {
+            const { spawn } = require('child_process');
+            const pyInit = `import sys, ctypes, time
+CG = ctypes.cdll.LoadLibrary('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics')
+class CGPoint(ctypes.Structure): _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
+CG.CGEventCreateMouseEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint32, CGPoint, ctypes.c_uint32]
+CG.CGEventCreateMouseEvent.restype = ctypes.c_void_p
+CG.CGEventPost.argtypes = [ctypes.c_uint32, ctypes.c_void_p]
+
+for line in sys.stdin:
+    parts = line.strip().split()
+    if not parts: continue
+    if parts[0] == 'move':
+        x, y = float(parts[1]), float(parts[2])
+        ev = CG.CGEventCreateMouseEvent(None, 5, CGPoint(x, y), 0)
+        CG.CGEventPost(0, ev)
+    elif parts[0] == 'click':
+        x, y, downType, upType, mouseBtn = map(float, parts[1:])
+        pos = CGPoint(x, y)
+        CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, int(downType), pos, int(mouseBtn)))
+        time.sleep(0.01)
+        CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, int(upType), pos, int(mouseBtn)))
+`;
+            this.pyProcess = spawn('python3', ['-u', '-c', pyInit]);
         }
 
         this.init();
@@ -71,12 +92,19 @@ except Exception:
                 exec(cmd);
             }
         } else if (this.platform === 'darwin') {
-            const pyScript = `import ctypes
+            if (this.pyProcess && !this.pyProcess.stdin.destroyed) {
+                this.pyProcess.stdin.write(`move ${x} ${y}\n`);
+            } else {
+                const pyScript = `import ctypes
 CG = ctypes.cdll.LoadLibrary('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics')
 class CGPoint(ctypes.Structure): _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
+CG.CGEventCreateMouseEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint32, CGPoint, ctypes.c_uint32]
+CG.CGEventCreateMouseEvent.restype = ctypes.c_void_p
+CG.CGEventPost.argtypes = [ctypes.c_uint32, ctypes.c_void_p]
 ev = CG.CGEventCreateMouseEvent(None, 5, CGPoint(${x}, ${y}), 0)
 CG.CGEventPost(0, ev)`;
-            execFile('python3', ['-c', pyScript]);
+                execFile('python3', ['-c', pyScript]);
+            }
         }
         
         this.currentX = x;
@@ -101,14 +129,21 @@ CG.CGEventPost(0, ev)`;
             let upType = button === 'right' ? 4 : 2;
             let mouseBtn = button === 'right' ? 1 : 0;
             
-            const pyScript = `import ctypes, time
+            if (this.pyProcess && !this.pyProcess.stdin.destroyed) {
+                this.pyProcess.stdin.write(`click ${this.currentX} ${this.currentY} ${downType} ${upType} ${mouseBtn}\n`);
+            } else {
+                const pyScript = `import ctypes, time
 CG = ctypes.cdll.LoadLibrary('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics')
 class CGPoint(ctypes.Structure): _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
+CG.CGEventCreateMouseEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint32, CGPoint, ctypes.c_uint32]
+CG.CGEventCreateMouseEvent.restype = ctypes.c_void_p
+CG.CGEventPost.argtypes = [ctypes.c_uint32, ctypes.c_void_p]
 pos = CGPoint(${this.currentX}, ${this.currentY})
 CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, ${downType}, pos, ${mouseBtn}))
 time.sleep(0.01)
 CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, ${upType}, pos, ${mouseBtn}))`;
-            execFile('python3', ['-c', pyScript]);
+                execFile('python3', ['-c', pyScript]);
+            }
         }
     }
 }
