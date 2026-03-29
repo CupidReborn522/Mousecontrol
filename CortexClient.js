@@ -66,6 +66,15 @@ class CortexClient {
     }
 
     async authenticate() {
+        const accessResult = await this.sendRequest("requestAccess", {
+            clientId: this.config.clientId,
+            clientSecret: this.config.clientSecret
+        });
+
+        if (!accessResult.accessGranted) {
+            throw new Error("Please open Emotiv Launcher and click 'Approve' to grant access.");
+        }
+
         const result = await this.sendRequest("authorize", {
             clientId: this.config.clientId,
             clientSecret: this.config.clientSecret
