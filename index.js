@@ -38,6 +38,12 @@ function loadConfig() {
             console.error("Error reading config.json:", err.message);
         }
     }
+    
+    console.log("\n--- CREDENTIALS LOADED ---");
+    console.log("Client ID:", credentials.clientId);
+    console.log("Client Secret:", credentials.clientSecret);
+    console.log("--------------------------\n");
+
     return credentials;
 }
 
@@ -130,14 +136,28 @@ async function attemptConnection() {
     io.emit('headset-status', { connected: false, error: "Connecting..." });
     
     try {
-        const headset = await client.initialize();
+        let headset;
+        try {
+            headset = await client.initialize();
+        } catch (e) {
+            throw new Error("Initialize Failed: " + e.message);
+        }
+        
         console.log(`Connected to headset: ${headset.id}`);
         io.emit('headset-status', { connected: true, id: headset.id });
-        await client.subscribe(['com', 'fac', 'pow']);
+        
+        try {
+            await client.subscribe(['com', 'fac']);
+        } catch (e) {
+            throw new Error("Subscribe Failed: " + e.message);
+        }
+        
         isConnecting = false;
     } catch (err) {
-        console.warn("Connection attempt failed. Retrying in 5 seconds...", err.message);
-        io.emit('headset-status', { connected: false, error: "Retrying connection..." });
+        console.warn("\n=== EMOTIV ERROR DETECTED ===");
+        console.warn(err.message);
+        console.warn("=============================\n");
+        io.emit('headset-status', { connected: false, error: err.message });
         isConnecting = false;
         setTimeout(attemptConnection, 5000);
     }

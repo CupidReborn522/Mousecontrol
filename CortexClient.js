@@ -8,7 +8,7 @@ class CortexClient {
         this.authToken = null;
         this.sessionId = null;
         this.callbacks = {};
-        this.onEvent = (event) => {}; // Callback to be overridden
+        this.onEvent = (event) => { }; // Callback to be overridden
     }
 
     connect() {
@@ -16,7 +16,7 @@ class CortexClient {
             this.socket = new WebSocket('wss://localhost:6868', {
                 rejectUnauthorized: false
             });
-            
+
             this.socket.on('error', (error) => {
                 reject(new Error("Cortex API connection failed. Is EMOTIV Launcher running?"));
             });
@@ -34,7 +34,7 @@ class CortexClient {
                     this.onEvent(message);
                 }
             });
-            
+
             this.socket.on('close', () => {
                 this.onEvent({ connection_closed: true });
                 this.socket = null;
