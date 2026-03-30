@@ -26,6 +26,42 @@ const mappingSelects = {
     rightClick: document.getElementById('map-rightClick')
 };
 
+const mappingThresholds = {
+    moveUp: document.getElementById('thresh-moveUp'),
+    moveDown: document.getElementById('thresh-moveDown'),
+    moveLeft: document.getElementById('thresh-moveLeft'),
+    moveRight: document.getElementById('thresh-moveRight'),
+    leftClick: document.getElementById('thresh-leftClick'),
+    rightClick: document.getElementById('thresh-rightClick')
+};
+
+const mappingThreshVals = {
+    moveUp: document.getElementById('val-moveUp'),
+    moveDown: document.getElementById('val-moveDown'),
+    moveLeft: document.getElementById('val-moveLeft'),
+    moveRight: document.getElementById('val-moveRight'),
+    leftClick: document.getElementById('val-leftClick'),
+    rightClick: document.getElementById('val-rightClick')
+};
+
+// Bind range values to spans and auto-save
+Object.keys(mappingThresholds).forEach(key => {
+    mappingThresholds[key].addEventListener('input', (e) => {
+        mappingThreshVals[key].textContent = `${e.target.value}%`;
+    });
+    // Auto-save when slider is released
+    mappingThresholds[key].addEventListener('change', () => {
+        document.getElementById('save-mappings-btn').click();
+    });
+});
+
+// Auto-save on dropdown change too
+Object.values(mappingSelects).forEach(select => {
+    select.addEventListener('change', () => {
+        document.getElementById('save-mappings-btn').click();
+    });
+});
+
 const emotivOptions = {
     // Mental Commands
     'com:push': 'Push (Mental)',
@@ -55,53 +91,85 @@ Object.values(mappingSelects).forEach(select => {
     });
 });
 
-// Command Progress Bars
-const commandBars = {
-    push: document.querySelector('#cmd-push .progress-fill'),
-    pull: document.querySelector('#cmd-pull .progress-fill'),
-    left: document.querySelector('#cmd-left .progress-fill'),
-    right: document.querySelector('#cmd-right .progress-fill')
+let localMappings = {};
+
+const actionBars = {
+    moveUp: document.getElementById('bar-moveUp'),
+    moveDown: document.getElementById('bar-moveDown'),
+    moveLeft: document.getElementById('bar-moveLeft'),
+    moveRight: document.getElementById('bar-moveRight'),
+    leftClick: document.getElementById('bar-leftClick'),
+    rightClick: document.getElementById('bar-rightClick')
 };
 
 // State
 let lastLoggedAction = '';
 
-// Socket Events
+let frameValues = {
+    moveUp: 0, moveDown: 0, moveLeft: 0, moveRight: 0, leftClick: 0, rightClick: 0
+};
+
+// Data Streaming
 socket.on('emotiv-data', (data) => {
-    // Handle Mental Commands
+    let logMsg = "";
+    
+    // Decay old values gradually to smooth transitions
+    Object.keys(frameValues).forEach(k => {
+        frameValues[k] = Math.max(0, frameValues[k] - 0.05);
+    });
+
     if (data.com) {
         const action = data.com[0];
         const power = data.com[1];
         
-        // Update Bars
-        if (commandBars[action]) {
-            commandBars[action].style.width = `${power * 100}%`;
-        } else if (action === 'neutral') {
-            // Reset all bars slightly if neutral
-            Object.values(commandBars).forEach(bar => bar.style.width = '0%');
-        }
-
-        // Log if it's a significant action and changed
-        if (power > 0.3 && action !== 'neutral' && action !== lastLoggedAction) {
-            addLog(`Mental Command: ${action.toUpperCase()}`, 'command');
+        if (action !== 'neutral' && power > 0.05 && action !== lastLoggedAction) {
+            logMsg = `Thought: ${action} (${Math.round(power*100)}%)`;
+            addLog(logMsg, "command");
             lastLoggedAction = action;
         } else if (action === 'neutral') {
-            lastLoggedAction = 'neutral';
+            lastLoggedAction = '';
         }
+
+        Object.entries(localMappings).forEach(([key, mapping]) => {
+            if (mapping.type === 'com' && mapping.action === action) {
+                frameValues[key] = power;
+            }
+        });
     }
 
-    // Handle Facial Expressions
     if (data.fac) {
-        const eyeAction = data.fac[0];
-        const lowerFaceAction = data.fac[2];
-        const lowerFacePower = data.fac[3];
+        const eye = data.fac[0];
+        const upper = data.fac[1];
+        const lower = data.fac[3];
+        const lowerPower = data.fac[4];
 
-        if (eyeAction === 'blink') {
-            addLog('Gesture Detected: BLINK (Click)', 'gesture');
-        } else if (lowerFaceAction === 'clench' && lowerFacePower > 0.5) {
-            addLog('Gesture Detected: CLENCH (Click)', 'gesture');
+        let gestures = [];
+        if (eye !== 'neutral') gestures.push(eye);
+        if (upper !== 'neutral') gestures.push(upper);
+        if (lower !== 'neutral') gestures.push(`${lower} (${Math.round(lowerPower*100)}%)`);
+
+        if (gestures.length > 0) {
+            logMsg = `Face: ${gestures.join(', ')}`;
+            addLog(logMsg, "gesture");
         }
+
+        Object.entries(localMappings).forEach(([key, mapping]) => {
+            if (mapping.type === 'fac') {
+                if (mapping.action === eye) frameValues[key] = Math.max(frameValues[key], eye !== 'neutral' ? 1.0 : 0);
+                else if (mapping.action === upper) frameValues[key] = Math.max(frameValues[key], upper !== 'neutral' ? 1.0 : 0);
+                else if (mapping.action === lower) frameValues[key] = Math.max(frameValues[key], lower !== 'neutral' ? lowerPower : 0);
+            }
+        });
     }
+
+    // Update UI progress bars
+    Object.entries(actionBars).forEach(([key, el]) => {
+        if (el) {
+            const percent = Math.round(frameValues[key] * 100);
+            el.style.width = `${percent}%`;
+            el.textContent = `${percent}%`; // Always show text!
+        }
+    });
 });
 
 socket.on('headset-status', (status) => {
@@ -129,10 +197,33 @@ socket.on('status-update', (state) => {
         addLog("System: Please configure API credentials to begin.", "system");
     }
     if (state.mappings) {
+        localMappings = state.mappings;
+        
+        const baseNames = {
+            moveUp: 'Move Up ▲',
+            moveDown: 'Move Down ▼',
+            moveLeft: 'Move Left ◀',
+            moveRight: 'Move Right ▶',
+            leftClick: 'Left Click 🖱️',
+            rightClick: 'Right Click 🖱️'
+        };
+
         Object.entries(state.mappings).forEach(([actionKey, mapping]) => {
             if (mappingSelects[actionKey]) {
                 const val = `${mapping.type}:${mapping.action}`;
                 mappingSelects[actionKey].value = val;
+                
+                // Update Mapped Action Intensity Labels
+                const actionLabelEl = document.querySelector(`#act-${actionKey} label`);
+                if (actionLabelEl) {
+                    const emotivName = emotivOptions[val] || 'Unmapped';
+                    actionLabelEl.textContent = `${baseNames[actionKey]} [${emotivName}]`;
+                }
+            }
+            if (mappingThresholds[actionKey] && mapping.threshold !== undefined) {
+                const percent = Math.round(mapping.threshold * 100);
+                mappingThresholds[actionKey].value = percent;
+                mappingThreshVals[actionKey].textContent = `${percent}%`;
             }
         });
     }
@@ -165,7 +256,8 @@ document.getElementById('save-mappings-btn').addEventListener('click', () => {
     const newMappings = {};
     Object.entries(mappingSelects).forEach(([actionKey, select]) => {
         const [type, action] = select.value.split(':');
-        newMappings[actionKey] = { type, action };
+        const threshold = mappingThresholds[actionKey] ? parseInt(mappingThresholds[actionKey].value, 10) / 100 : 0.5;
+        newMappings[actionKey] = { type, action, threshold };
     });
     socket.emit('save-mappings', newMappings);
     addLog("System: Checking and saving new command mappings...", "system");

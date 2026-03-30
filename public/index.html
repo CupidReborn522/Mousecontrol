@@ -88,34 +88,66 @@
                 <button id="save-mappings-btn" class="btn-primary" style="font-size: 0.8rem; padding: 5px 15px;">Apply</button>
             </div>
             <div class="mapping-grid">
-                <div class="mapping-item"><label>Move Up</label><select id="map-moveUp" class="mapping-select"></select></div>
-                <div class="mapping-item"><label>Move Down</label><select id="map-moveDown" class="mapping-select"></select></div>
-                <div class="mapping-item"><label>Move Left</label><select id="map-moveLeft" class="mapping-select"></select></div>
-                <div class="mapping-item"><label>Move Right</label><select id="map-moveRight" class="mapping-select"></select></div>
-                <div class="mapping-item"><label>Left Click</label><select id="map-leftClick" class="mapping-select"></select></div>
-                <div class="mapping-item"><label>Right Click</label><select id="map-rightClick" class="mapping-select"></select></div>
+                <div class="mapping-item">
+                    <label>Move Up</label>
+                    <select id="map-moveUp" class="mapping-select"></select>
+                    <div class="mapping-thresh-wrap"><input type="range" class="mapping-thresh" id="thresh-moveUp" min="0" max="100" value="10"><span id="val-moveUp">10%</span></div>
+                </div>
+                <div class="mapping-item">
+                    <label>Move Down</label>
+                    <select id="map-moveDown" class="mapping-select"></select>
+                    <div class="mapping-thresh-wrap"><input type="range" class="mapping-thresh" id="thresh-moveDown" min="0" max="100" value="10"><span id="val-moveDown">10%</span></div>
+                </div>
+                <div class="mapping-item">
+                    <label>Move Left</label>
+                    <select id="map-moveLeft" class="mapping-select"></select>
+                    <div class="mapping-thresh-wrap"><input type="range" class="mapping-thresh" id="thresh-moveLeft" min="0" max="100" value="10"><span id="val-moveLeft">10%</span></div>
+                </div>
+                <div class="mapping-item">
+                    <label>Move Right</label>
+                    <select id="map-moveRight" class="mapping-select"></select>
+                    <div class="mapping-thresh-wrap"><input type="range" class="mapping-thresh" id="thresh-moveRight" min="0" max="100" value="10"><span id="val-moveRight">10%</span></div>
+                </div>
+                <div class="mapping-item">
+                    <label>Left Click</label>
+                    <select id="map-leftClick" class="mapping-select"></select>
+                    <div class="mapping-thresh-wrap"><input type="range" class="mapping-thresh" id="thresh-leftClick" min="0" max="100" value="50"><span id="val-leftClick">50%</span></div>
+                </div>
+                <div class="mapping-item">
+                    <label>Right Click</label>
+                    <select id="map-rightClick" class="mapping-select"></select>
+                    <div class="mapping-thresh-wrap"><input type="range" class="mapping-thresh" id="thresh-rightClick" min="0" max="100" value="50"><span id="val-rightClick">50%</span></div>
+                </div>
             </div>
         </section>
 
         <section class="data-grids">
-            <div class="card glass mental-commands">
-                <h3>Mental Commands</h3>
+            <div class="card glass mapped-actions">
+                <h3>Mapped Action Intensity</h3>
                 <div class="command-bars">
-                    <div class="command-item" id="cmd-push">
-                        <label>Push</label>
-                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    <div class="command-item" id="act-moveUp">
+                        <label>Move Up ▲</label>
+                        <div class="progress-bg"><div class="progress-fill" id="bar-moveUp"></div></div>
                     </div>
-                    <div class="command-item" id="cmd-pull">
-                        <label>Pull</label>
-                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    <div class="command-item" id="act-moveDown">
+                        <label>Move Down ▼</label>
+                        <div class="progress-bg"><div class="progress-fill" id="bar-moveDown"></div></div>
                     </div>
-                    <div class="command-item" id="cmd-left">
-                        <label>Left</label>
-                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    <div class="command-item" id="act-moveLeft">
+                        <label>Move Left ◀</label>
+                        <div class="progress-bg"><div class="progress-fill" id="bar-moveLeft"></div></div>
                     </div>
-                    <div class="command-item" id="cmd-right">
-                        <label>Right</label>
-                        <div class="progress-bg"><div class="progress-fill"></div></div>
+                    <div class="command-item" id="act-moveRight">
+                        <label>Move Right ▶</label>
+                        <div class="progress-bg"><div class="progress-fill" id="bar-moveRight"></div></div>
+                    </div>
+                    <div class="command-item" id="act-leftClick">
+                        <label>Left Click 🖱️</label>
+                        <div class="progress-bg"><div class="progress-fill" id="bar-leftClick"></div></div>
+                    </div>
+                    <div class="command-item" id="act-rightClick">
+                        <label>Right Click 🖱️</label>
+                        <div class="progress-bg"><div class="progress-fill" id="bar-rightClick"></div></div>
                     </div>
                 </div>
             </div>

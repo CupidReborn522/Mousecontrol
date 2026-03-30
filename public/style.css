@@ -191,12 +191,36 @@ input[type="range"] {
 .mapping-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
 }
 
 .mapping-item label {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    color: var(--accent-cyan);
+    font-weight: 500;
+}
+
+.mapping-thresh-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.mapping-thresh-wrap input[type="range"] {
+    flex-grow: 1;
+    height: 4px;
+}
+
+.mapping-thresh-wrap span {
+    font-size: 0.75rem;
     color: var(--text-muted);
+    min-width: 32px;
+    text-align: right;
 }
 
 .mapping-select {
@@ -233,7 +257,7 @@ input[type="range"] {
 .command-bars {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 0.8rem;
 }
 
 .command-item label {
@@ -255,8 +279,16 @@ input[type="range"] {
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, var(--accent-cyan), #00aaff);
-    transition: width 0.1s ease-out;
+    transition: width 0.4s ease-out;
     box-shadow: 0 0 10px var(--accent-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 5px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    color: #000;
+    overflow: visible;
 }
 
 /* Log Container */

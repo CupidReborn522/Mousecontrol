@@ -52,6 +52,9 @@ let config = loadConfig();
 // State
 let mouseControlEnabled = false;
 let moveSpeed = MOVE_SPEED_DEFAULT;
+let mentalThreshold = 0.1;
+let facialThreshold = 0.5;
+let lastClickTime = 0;
 
 // Initialize Server
 const app = express();
@@ -79,44 +82,59 @@ function setupClient() {
         io.emit('emotiv-data', event);
         
         if (!mouseControlEnabled) return;
-
         const mappings = config.mappings || {};
-        
-        // Evaluate Mental Commands
+
+        const executeMapping = (key) => {
+            const isClick = key === 'leftClick' || key === 'rightClick';
+            const now = Date.now();
+            
+            // Throttle Clicks to prevent spam
+            if (isClick && (now - lastClickTime < 1000)) return;
+            if (isClick) lastClickTime = now;
+
+            switch(key) {
+                case 'moveUp': mouse.moveRelative(0, -moveSpeed); break;
+                case 'moveDown': mouse.moveRelative(0, moveSpeed); break;
+                case 'moveLeft': mouse.moveRelative(-moveSpeed, 0); break;
+                case 'moveRight': mouse.moveRelative(moveSpeed, 0); break;
+                case 'leftClick': mouse.click('left'); break;
+                case 'rightClick': mouse.click('right'); break;
+            }
+        };
+
         if (event.com) {
             const action = event.com[0];
             const power = event.com[1];
-            if (power > 0.1) {
-                if (mappings.moveUp?.type === 'com' && mappings.moveUp?.action === action) mouse.moveRelative(0, -moveSpeed);
-                if (mappings.moveDown?.type === 'com' && mappings.moveDown?.action === action) mouse.moveRelative(0, moveSpeed);
-                if (mappings.moveLeft?.type === 'com' && mappings.moveLeft?.action === action) mouse.moveRelative(-moveSpeed, 0);
-                if (mappings.moveRight?.type === 'com' && mappings.moveRight?.action === action) mouse.moveRelative(moveSpeed, 0);
-                if (mappings.leftClick?.type === 'com' && mappings.leftClick?.action === action) mouse.click('left');
-                if (mappings.rightClick?.type === 'com' && mappings.rightClick?.action === action) mouse.click('right');
-            }
+            
+            Object.entries(mappings).forEach(([key, mapping]) => {
+                if (mapping.type === 'com' && mapping.action === action) {
+                    const threshold = mapping.threshold !== undefined ? mapping.threshold : 0.1;
+                    if (power > threshold) executeMapping(key);
+                }
+            });
         }
-        
-        // Evaluate Facial Expressions
+
         if (event.fac) {
             const eyeAction = event.fac[0];
             const upperFaceAction = event.fac[1];
-            const lowerFaceAction = event.fac[2];
-            const lowerFacePower = event.fac[3];
+            const lowerFaceAction = event.fac[3];
+            const lowerFacePower = event.fac[4];
 
-            const evalFac = (mapping) => {
-                if (mapping?.type !== 'fac') return false;
-                if (mapping.action === eyeAction) return true;
-                if (mapping.action === upperFaceAction) return true;
-                if (mapping.action === lowerFaceAction && lowerFacePower > 0.5) return true;
-                return false;
-            };
+            Object.entries(mappings).forEach(([key, mapping]) => {
+                if (mapping.type === 'fac') {
+                    let triggered = false;
+                    if (mapping.action === eyeAction) triggered = true;
+                    if (mapping.action === upperFaceAction) triggered = true;
+                    if (mapping.action === lowerFaceAction) {
+                        const threshold = mapping.threshold !== undefined ? mapping.threshold : 0.5;
+                        if (lowerFacePower > threshold) triggered = true;
+                    }
 
-            if (evalFac(mappings.moveUp)) mouse.moveRelative(0, -moveSpeed);
-            if (evalFac(mappings.moveDown)) mouse.moveRelative(0, moveSpeed);
-            if (evalFac(mappings.moveLeft)) mouse.moveRelative(-moveSpeed, 0);
-            if (evalFac(mappings.moveRight)) mouse.moveRelative(moveSpeed, 0);
-            if (evalFac(mappings.leftClick)) mouse.click('left');
-            if (evalFac(mappings.rightClick)) mouse.click('right');
+                    if (triggered) {
+                        executeMapping(key);
+                    }
+                }
+            });
         }
     };
 }
@@ -169,6 +187,8 @@ io.on('connection', (socket) => {
     socket.emit('status-update', { 
         mouseControlEnabled, 
         moveSpeed, 
+        mentalThreshold,
+        facialThreshold,
         hasConfig: !!(config.clientId && config.clientSecret),
         mappings: config.mappings 
     });
@@ -178,9 +198,19 @@ io.on('connection', (socket) => {
         io.emit('status-update', { mouseControlEnabled });
     });
 
-    socket.on('update-speed', (speed) => {
-        moveSpeed = parseInt(speed) || MOVE_SPEED_DEFAULT;
+    socket.on('update-speed', (val) => {
+        moveSpeed = parseInt(val, 10) || MOVE_SPEED_DEFAULT;
         io.emit('status-update', { moveSpeed });
+    });
+
+    socket.on('update-mental-sensitivity', (val) => {
+        mentalThreshold = parseFloat(val) || 0.1;
+        io.emit('status-update', { mentalThreshold });
+    });
+
+    socket.on('update-facial-sensitivity', (val) => {
+        facialThreshold = parseFloat(val) || 0.5;
+        io.emit('status-update', { facialThreshold });
     });
 
     let lastSyncTime = 0;
