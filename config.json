@@ -1,0 +1,38 @@
+{
+  "clientId": "",
+  "clientSecret": "",
+  "appName": "MouseControlUI",
+  "appVersion": "1.0.0",
+  "mappings": {
+    "moveUp": {
+      "type": "com",
+      "action": "lift",
+      "threshold": 0.1
+    },
+    "moveDown": {
+      "type": "com",
+      "action": "pull",
+      "threshold": 0.1
+    },
+    "moveLeft": {
+      "type": "com",
+      "action": "left",
+      "threshold": 0.08
+    },
+    "moveRight": {
+      "type": "com",
+      "action": "right",
+      "threshold": 0.1
+    },
+    "leftClick": {
+      "type": "fac",
+      "action": "winkL",
+      "threshold": 0.5
+    },
+    "rightClick": {
+      "type": "fac",
+      "action": "winkR",
+      "threshold": 0.5
+    }
+  }
+}
