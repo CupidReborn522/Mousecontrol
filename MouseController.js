@@ -11,7 +11,7 @@ class MouseController {
             const { spawn } = require('child_process');
             this.psProcess = spawn('powershell', ['-NoProfile', '-Command', '-']);
             this.psProcess.stdin.write('Add-Type -AssemblyName System.Windows.Forms\n');
-            this.psProcess.stdin.write('Add-Type -MemberDefinition \'"[DllImport(""user32.dll"")] public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);"\' -Name Win32 -Namespace Native\n');
+            this.psProcess.stdin.write(`Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint cButtons, uint dwExtraInfo);' -Name Win32 -Namespace Native\n`);
         } else if (this.platform === 'darwin') {
             const { spawn } = require('child_process');
             const pyInit = `import sys, ctypes, time
@@ -112,9 +112,18 @@ CG.CGEventPost(0, ev)`;
     }
 
     moveRelative(dx, dy) {
-        this.currentX += dx;
-        this.currentY += dy;
-        this.moveMouse(this.currentX, this.currentY);
+        if (this.platform === 'win32') {
+            if (this.psProcess && !this.psProcess.stdin.destroyed) {
+                this.psProcess.stdin.write(`[Native.Win32]::mouse_event(1, ${dx}, ${dy}, 0, 0)\n`);
+            } else {
+                const cmd = `powershell -Command "Add-Type -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint cButtons, uint dwExtraInfo);' -Name Win32 -Namespace Native; [Native.Win32]::mouse_event(1, ${dx}, ${dy}, 0, 0);"`;
+                exec(cmd);
+            }
+        } else if (this.platform === 'darwin') {
+            this.currentX += dx;
+            this.currentY += dy;
+            this.moveMouse(this.currentX, this.currentY);
+        }
     }
 
     click(button = 'left') {

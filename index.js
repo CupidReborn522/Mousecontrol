@@ -185,21 +185,7 @@ io.on('connection', (socket) => {
 
     let lastSyncTime = 0;
     
-    socket.on('test-move', async (direction) => {
-        // Obtener la posición física una vez por cada "ráfaga" de movimientos
-        // Si mantienes la tecla pulsada, usa la posición calculada sin latencia
-        try {
-            if (Date.now() - lastSyncTime > 1000) {
-                const pos = await mouse.getMousePosition();
-                mouse.currentX = pos.x;
-                mouse.currentY = pos.y;
-            }
-        } catch (e) {
-            console.error("Error syncing mouse:", e);
-        }
-        
-        lastSyncTime = Date.now();
-
+    socket.on('test-move', (direction) => {
         if (direction === 'up') mouse.moveRelative(0, -moveSpeed);
         if (direction === 'down') mouse.moveRelative(0, moveSpeed);
         if (direction === 'left') mouse.moveRelative(-moveSpeed, 0);
