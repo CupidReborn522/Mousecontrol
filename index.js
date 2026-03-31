@@ -51,6 +51,7 @@ let config = loadConfig();
 
 // State
 let mouseControlEnabled = false;
+let mouseControlMode = 'discrete'; // 'discrete' or 'joystick'
 let moveSpeed = MOVE_SPEED_DEFAULT;
 let mentalThreshold = 0.1;
 let facialThreshold = 0.5;
@@ -84,7 +85,7 @@ function setupClient() {
         if (!mouseControlEnabled) return;
         const mappings = config.mappings || {};
 
-        const executeMapping = (key) => {
+        const executeMapping = (key, power = 1.0) => {
             const isClick = key === 'leftClick' || key === 'rightClick';
             const now = Date.now();
             
@@ -92,11 +93,14 @@ function setupClient() {
             if (isClick && (now - lastClickTime < 1000)) return;
             if (isClick) lastClickTime = now;
 
+            // In joystick mode, speed is proportional to power
+            const speed = (mouseControlMode === 'joystick' && !isClick) ? moveSpeed * power : moveSpeed;
+
             switch(key) {
-                case 'moveUp': mouse.moveRelative(0, -moveSpeed); break;
-                case 'moveDown': mouse.moveRelative(0, moveSpeed); break;
-                case 'moveLeft': mouse.moveRelative(-moveSpeed, 0); break;
-                case 'moveRight': mouse.moveRelative(moveSpeed, 0); break;
+                case 'moveUp': mouse.moveRelative(0, -speed); break;
+                case 'moveDown': mouse.moveRelative(0, speed); break;
+                case 'moveLeft': mouse.moveRelative(-speed, 0); break;
+                case 'moveRight': mouse.moveRelative(speed, 0); break;
                 case 'leftClick': mouse.click('left'); break;
                 case 'rightClick': mouse.click('right'); break;
             }
@@ -109,7 +113,7 @@ function setupClient() {
             Object.entries(mappings).forEach(([key, mapping]) => {
                 if (mapping.type === 'com' && mapping.action === action) {
                     const threshold = mapping.threshold !== undefined ? mapping.threshold : 0.1;
-                    if (power > threshold) executeMapping(key);
+                    if (power > threshold) executeMapping(key, power);
                 }
             });
         }
@@ -131,7 +135,7 @@ function setupClient() {
                     }
 
                     if (triggered) {
-                        executeMapping(key);
+                        executeMapping(key, lowerFacePower || 1.0);
                     }
                 }
             });
@@ -186,6 +190,7 @@ io.on('connection', (socket) => {
     console.log('UI Connected');
     socket.emit('status-update', { 
         mouseControlEnabled, 
+        mouseControlMode,
         moveSpeed, 
         mentalThreshold,
         facialThreshold,
@@ -196,6 +201,11 @@ io.on('connection', (socket) => {
     socket.on('toggle-control', (enabled) => {
         mouseControlEnabled = enabled;
         io.emit('status-update', { mouseControlEnabled });
+    });
+
+    socket.on('toggle-mode', (mode) => {
+        mouseControlMode = mode;
+        io.emit('status-update', { mouseControlMode });
     });
 
     socket.on('update-speed', (val) => {

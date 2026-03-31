@@ -6,6 +6,8 @@ const statusText = statusBadge.querySelector('.text');
 const mouseToggle = document.getElementById('mouse-toggle');
 const speedRange = document.getElementById('speed-range');
 const speedValueDisplay = document.getElementById('speed-value');
+const modeToggle = document.getElementById('mode-toggle');
+const joyKnob = document.getElementById('joy-knob');
 const logContainer = document.getElementById('log-container');
 
 // Config Modal Elements
@@ -170,6 +172,19 @@ socket.on('emotiv-data', (data) => {
             el.textContent = `${percent}%`; // Always show text!
         }
     });
+
+    // Update Virtual Joystick visuals
+    if (joyKnob) {
+        const maxX = 70; // Half of base minus half of knob
+        const maxY = 70;
+        const x = (frameValues.moveRight - frameValues.moveLeft) * maxX;
+        const y = (frameValues.moveDown - frameValues.moveUp) * maxY;
+        joyKnob.style.transform = `translate(${x}px, ${y}px)`;
+        
+        // Add glow if actively moving
+        const intensity = Math.max(frameValues.moveUp, frameValues.moveDown, frameValues.moveLeft, frameValues.moveRight);
+        joyKnob.style.boxShadow = `0 0 ${15 + intensity * 20}px var(--accent-magenta)`;
+    }
 });
 
 socket.on('headset-status', (status) => {
@@ -191,6 +206,9 @@ socket.on('status-update', (state) => {
     if (state.moveSpeed !== undefined) {
         speedRange.value = state.moveSpeed;
         speedValueDisplay.textContent = `${state.moveSpeed}px`;
+    }
+    if (state.mouseControlMode !== undefined) {
+        modeToggle.checked = (state.mouseControlMode === 'joystick');
     }
     if (state.hasConfig === false) {
         configModal.classList.remove('hidden');
@@ -273,6 +291,12 @@ speedRange.addEventListener('input', (e) => {
 
 speedRange.addEventListener('change', (e) => {
     socket.emit('update-speed', e.target.value);
+});
+
+modeToggle.addEventListener('change', (e) => {
+    const mode = e.target.checked ? 'joystick' : 'discrete';
+    socket.emit('toggle-mode', mode);
+    addLog(`System: Switched to ${mode.toUpperCase()} mode`, 'system');
 });
 
 // Test Panel Arrows Logic

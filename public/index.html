@@ -48,12 +48,21 @@
         <section class="control-panel glass">
             <div class="control-header">
                 <h2>System Control</h2>
-                <div class="toggle-container">
-                    <span class="toggle-label">Mouse Control</span>
-                    <label class="switch">
-                        <input type="checkbox" id="mouse-toggle">
-                        <span class="slider round"></span>
-                    </label>
+                <div class="toggle-group">
+                    <div class="toggle-container">
+                        <span class="toggle-label">Mouse Control</span>
+                        <label class="switch">
+                            <input type="checkbox" id="mouse-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-container">
+                        <span class="toggle-label">Joystick Mode</span>
+                        <label class="switch mode-switch">
+                            <input type="checkbox" id="mode-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
             
@@ -122,6 +131,21 @@
         </section>
 
         <section class="data-grids">
+            <div class="card glass neural-joystick">
+                <h3>Neural Joystick</h3>
+                <div class="joystick-wrapper">
+                    <div class="joystick-base">
+                        <div class="joystick-knob" id="joy-knob"></div>
+                        <div class="axis x-axis"></div>
+                        <div class="axis y-axis"></div>
+                        <span class="label-up">UP</span>
+                        <span class="label-down">DOWN</span>
+                        <span class="label-left">LEFT</span>
+                        <span class="label-right">RIGHT</span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="card glass mapped-actions">
                 <h3>Mapped Action Intensity</h3>
                 <div class="command-bars">

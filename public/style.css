@@ -147,6 +147,11 @@ h1 span {
     color: var(--accent-magenta);
 }
 
+.toggle-group {
+    display: flex;
+    gap: 30px;
+}
+
 .toggle-container {
     display: flex;
     align-items: center;
@@ -522,4 +527,75 @@ button {
     color: #000;
     box-shadow: 0 0 15px var(--accent-cyan);
     transform: scale(0.95);
+}
+/* Neural Joystick */
+.neural-joystick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.joystick-wrapper {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.joystick-base {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--glass-border);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.joystick-knob {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--accent-magenta), #660066);
+    box-shadow: 0 0 15px var(--accent-magenta);
+    z-index: 10;
+    transition: transform 0.15s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+}
+
+.axis {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.x-axis { width: 100%; height: 1px; top: 50%; left: 0; }
+.y-axis { height: 100%; width: 1px; left: 50%; top: 0; }
+
+.joystick-base span {
+    position: absolute;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+}
+
+.label-up { top: 10px; }
+.label-down { bottom: 10px; }
+.label-left { left: 10px; }
+.label-right { right: 10px; }
+
+/* Mode Switch Color */
+.mode-switch input:checked + .slider {
+    background-color: var(--accent-cyan);
+}
+
+/* Data Grids Adjustment */
+.data-grids {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
 }
