@@ -299,6 +299,18 @@ modeToggle.addEventListener('change', (e) => {
     addLog(`System: Switched to ${mode.toUpperCase()} mode`, 'system');
 });
 
+// Emergency Stop with TAB key
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+        e.preventDefault(); // Prevent focus switching
+        if (mouseToggle.checked) {
+            mouseToggle.checked = false;
+            socket.emit('toggle-control', false);
+            addLog("System: Emergency Stop (TAB pressed)", "system");
+        }
+    }
+});
+
 // Test Panel Arrows Logic
 const arrowBtns = {
     ArrowUp: document.getElementById('btn-up'),
