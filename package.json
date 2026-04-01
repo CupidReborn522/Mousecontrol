@@ -2,10 +2,26 @@
   "name": "mousecontrol",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "start": "electron .",
+    "build:mac": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.mousecontrol.app",
+    "productName": "MouseControl",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "directories": {
+      "output": "dist"
+    }
   },
   "keywords": [],
   "author": "",
@@ -15,5 +31,9 @@
     "express": "^5.2.1",
     "socket.io": "^4.8.3",
     "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.1"
   }
 }

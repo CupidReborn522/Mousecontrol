@@ -85,10 +85,19 @@ function setupClient() {
         if (!mouseControlEnabled) return;
         const mappings = config.mappings || {};
 
-        const executeMapping = (key, power = 1.0) => {
+        const executeMapping = async (key, power = 1.0) => {
             const isClick = key === 'leftClick' || key === 'rightClick';
             const now = Date.now();
             
+            // System-wide Emergency Stop (Tab Check)
+            const stopPressed = await mouse.isTabPressed();
+            if (stopPressed) {
+                mouseControlEnabled = false;
+                io.emit('status-update', { mouseControlEnabled });
+                console.log("--- SYSTEM EMERGENCY STOP: TAB PRESSED ---");
+                return;
+            }
+
             // Throttle Clicks to prevent spam
             if (isClick && (now - lastClickTime < 1000)) return;
             if (isClick) lastClickTime = now;
@@ -262,6 +271,9 @@ io.on('connection', (socket) => {
 async function start() {
     server.listen(PORT, () => {
         console.log(`\n--- Dashboard available at http://localhost:${PORT} ---`);
+        if (process.send) {
+            process.send('server-started');
+        }
     });
 
     attemptConnection();

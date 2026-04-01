@@ -11,7 +11,7 @@ class MouseController {
             const { spawn } = require('child_process');
             this.psProcess = spawn('powershell', ['-NoProfile', '-Command', '-']);
             this.psProcess.stdin.write('Add-Type -AssemblyName System.Windows.Forms\n');
-            this.psProcess.stdin.write(`Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint cButtons, uint dwExtraInfo);' -Name Win32 -Namespace Native\n`);
+            this.psProcess.stdin.write(`Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint cButtons, uint dwExtraInfo); [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vKey);' -Name Win32 -Namespace Native\n`);
         } else if (this.platform === 'darwin') {
             const { spawn } = require('child_process');
             const pyInit = `import sys, ctypes, time
@@ -34,6 +34,10 @@ for line in sys.stdin:
         CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, int(downType), pos, int(mouseBtn)))
         time.sleep(0.01)
         CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, int(upType), pos, int(mouseBtn)))
+    elif parts[0] == 'isTabPressed':
+        # Tab keycode on Mac is 48
+        isDown = CG.CGEventSourceKeyState(0, 48)
+        print("true" if isDown else "false")
 `;
             this.pyProcess = spawn('python3', ['-u', '-c', pyInit]);
         }
@@ -154,6 +158,36 @@ CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, ${upType}, pos, ${mouseBtn}))
                 execFile('python3', ['-c', pyScript]);
             }
         }
+    }
+
+    isTabPressed() {
+        return new Promise((resolve) => {
+            if (this.platform === 'win32') {
+                if (this.psProcess && !this.psProcess.stdin.destroyed) {
+                    // Check high bit of short (0x8000)
+                    this.psProcess.stdin.write(`[Native.Win32]::GetAsyncKeyState(0x09) -band 0x8000\n`);
+                    this.psProcess.stdout.once('data', (data) => {
+                        const val = parseInt(data.toString().trim());
+                        resolve(val !== 0);
+                    });
+                } else {
+                    exec(`powershell -Command "[Native.Win32]::GetAsyncKeyState(0x09) -band 0x8000"`, (err, stdout) => {
+                        resolve(stdout.trim() !== "0");
+                    });
+                }
+            } else if (this.platform === 'darwin') {
+                if (this.pyProcess && !this.pyProcess.stdin.destroyed) {
+                    this.pyProcess.stdin.write(`isTabPressed\n`);
+                    this.pyProcess.stdout.once('data', (data) => {
+                        resolve(data.toString().trim() === "true");
+                    });
+                } else {
+                    resolve(false);
+                }
+            } else {
+                resolve(false);
+            }
+        });
     }
 }
 
