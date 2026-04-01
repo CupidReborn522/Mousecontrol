@@ -78,7 +78,29 @@ app.on('ready', () => {
     Menu.setApplicationMenu(menu);
 });
 
+// Robust Clean up function
+function cleanUp() {
+    if (serverProcess) {
+        console.log("Terminating server process...");
+        if (process.platform === 'win32') {
+            // Aggressive tree kill for Windows
+            try {
+                const { execSync } = require('child_process');
+                execSync(`taskkill /F /T /PID ${serverProcess.pid}`, { stdio: 'ignore' });
+            } catch (e) {
+                serverProcess.kill('SIGKILL');
+            }
+        } else {
+            serverProcess.kill('SIGTERM');
+        }
+        serverProcess = null;
+    }
+}
+
+app.on('before-quit', cleanUp);
+
 app.on('window-all-closed', () => {
+    cleanUp();
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -92,7 +114,5 @@ app.on('activate', () => {
 
 // Clean up server process on quit
 app.on('will-quit', () => {
-    if (serverProcess) {
-        serverProcess.kill();
-    }
+    cleanUp();
 });

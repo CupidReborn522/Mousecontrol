@@ -189,6 +189,16 @@ CG.CGEventPost(0, CG.CGEventCreateMouseEvent(None, ${upType}, pos, ${mouseBtn}))
             }
         });
     }
+
+    close() {
+        console.log("Closing MouseController subprocesses...");
+        if (this.psProcess) {
+            try { this.psProcess.kill('SIGTERM'); } catch (e) {}
+        }
+        if (this.pyProcess) {
+            try { this.pyProcess.kill('SIGTERM'); } catch (e) {}
+        }
+    }
 }
 
 module.exports = MouseController;

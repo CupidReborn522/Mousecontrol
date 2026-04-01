@@ -279,4 +279,33 @@ async function start() {
     attemptConnection();
 }
 
+// Graceful Shutdown
+const cleanup = () => {
+    console.log("Shutting down server...");
+    mouse.close();
+    server.close(() => {
+        console.log("Server closed.");
+        process.exit(0);
+    });
+    // Force exit if server.close hangs
+    setTimeout(() => process.exit(1), 2000);
+};
+
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
+
+// Exit if parent process dies (for Electron integration)
+if (process.env.ELECTRON_RUN === 'true') {
+    const parentCheck = setInterval(() => {
+        try {
+            if (process.parent && !process.kill(process.ppid, 0)) {
+                cleanup();
+            }
+        } catch (e) {
+            clearInterval(parentCheck);
+            cleanup();
+        }
+    }, 2000);
+}
+
 start();
