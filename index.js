@@ -185,7 +185,7 @@ async function attemptConnection() {
 
         // Potential Profiling
         if (config.profile) {
-            const profiles = await client.queryProfiles();
+            const profiles = await client.queryProfile();
             const profileExists = profiles.find(p => p.name === config.profile);
             if (profileExists) {
                 await client.loadProfile(config.profile);
@@ -282,13 +282,16 @@ io.on('connection', (socket) => {
 
     socket.on('get-profiles', async () => {
         try {
+            console.log("Backend: Received get-profiles request");
             if (!client.authToken) {
-                return socket.emit('profiles-list', { error: "Not authenticated" });
+                console.warn("Backend: No auth token available");
+                return socket.emit('profiles-list', { error: "Not authenticated. Is the headset connected?" });
             }
-            const profiles = await client.queryProfiles();
+            const profiles = await client.queryProfile();
+            console.log(`Backend: Sending ${profiles ? profiles.length : 0} profiles to UI`);
             socket.emit('profiles-list', { profiles });
         } catch (err) {
-            console.error("Failed to query profiles:", err.message);
+            console.error("Backend: Failed to query profiles:", err.message);
             socket.emit('profiles-list', { error: err.message });
         }
     });

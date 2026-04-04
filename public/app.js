@@ -332,11 +332,18 @@ profileSelect.addEventListener('change', (e) => {
 });
 
 socket.on('profiles-list', (data) => {
+    console.log("UI: Received profiles-list event", data);
     if (data.error) {
         addLog(`Error: ${data.error}`, 'system');
         return;
     }
     
+    if (!data.profiles || !Array.isArray(data.profiles)) {
+        console.error("UI: profiles-list data is not an array", data);
+        addLog("Error: Invalid profile data received", 'system');
+        return;
+    }
+
     // Clear except first
     const currentVal = profileSelect.value;
     profileSelect.innerHTML = '<option value="">No Profile Loaded</option>';

@@ -118,10 +118,13 @@ class CortexClient {
         });
     }
 
-    async queryProfiles() {
-        return await this.sendRequest("queryProfiles", {
+    async queryProfile() {
+        console.log("CortexClient: Querying profile...");
+        const result = await this.sendRequest("queryProfile", {
             cortexToken: this.authToken
         });
+        console.log("CortexClient: Profile response:", JSON.stringify(result));
+        return result;
     }
 
     async setupProfile(profileName, status) {
