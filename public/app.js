@@ -17,6 +17,8 @@ const closeConfigBtn = document.getElementById('close-config');
 const saveConfigBtn = document.getElementById('save-config');
 const clientIdInput = document.getElementById('client-id');
 const clientSecretInput = document.getElementById('client-secret');
+const profileSelect = document.getElementById('profile-select');
+const refreshProfilesBtn = document.getElementById('refresh-profiles');
 
 // Mapping Elements
 const mappingSelects = {
@@ -245,6 +247,23 @@ socket.on('status-update', (state) => {
             }
         });
     }
+
+    if (state.profileLoaded !== undefined) {
+        addLog(`System: Profile '${state.profileLoaded}' loaded and active.`, 'system');
+        // Update profile select if possible
+        if (profileSelect) {
+            const opt = Array.from(profileSelect.options).find(o => o.value === state.profileLoaded);
+            if (opt) profileSelect.value = state.profileLoaded;
+            else {
+                // If not in list, add it
+                const newOpt = document.createElement('option');
+                newOpt.value = state.profileLoaded;
+                newOpt.textContent = state.profileLoaded;
+                profileSelect.appendChild(newOpt);
+                profileSelect.value = state.profileLoaded;
+            }
+        }
+    }
 });
 
 // UI Event Listeners
@@ -297,6 +316,40 @@ modeToggle.addEventListener('change', (e) => {
     const mode = e.target.checked ? 'joystick' : 'discrete';
     socket.emit('toggle-mode', mode);
     addLog(`System: Switched to ${mode.toUpperCase()} mode`, 'system');
+});
+
+refreshProfilesBtn.addEventListener('click', () => {
+    socket.emit('get-profiles');
+    addLog("System: Refreshing profile list...", "system");
+});
+
+profileSelect.addEventListener('change', (e) => {
+    const profileName = e.target.value;
+    if (profileName) {
+        socket.emit('select-profile', profileName);
+        addLog(`System: Attempting to load profile '${profileName}'...`, "system");
+    }
+});
+
+socket.on('profiles-list', (data) => {
+    if (data.error) {
+        addLog(`Error: ${data.error}`, 'system');
+        return;
+    }
+    
+    // Clear except first
+    const currentVal = profileSelect.value;
+    profileSelect.innerHTML = '<option value="">No Profile Loaded</option>';
+    
+    data.profiles.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        profileSelect.appendChild(opt);
+    });
+
+    if (currentVal) profileSelect.value = currentVal;
+    addLog(`System: Found ${data.profiles.length} profiles.`, 'system');
 });
 
 // Emergency Stop with TAB key

@@ -72,6 +72,16 @@
                     <input type="range" id="speed-range" min="1" max="100" value="20">
                     <span id="speed-value">20px</span>
                 </div>
+                <!-- Profile Selection -->
+                <div class="setting-item" style="margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 5px; margin-bottom: 5px;">
+                        <label for="profile-select">Training Profile</label>
+                        <button id="refresh-profiles" class="btn-small glass" title="Refresh Profiles" style="padding: 2px 8px; font-size: 0.7rem;">🔄 Refresh List</button>
+                    </div>
+                    <select id="profile-select" class="mapping-select">
+                        <option value="">No Profile Loaded</option>
+                    </select>
+                </div>
             </div>
         </section>
 

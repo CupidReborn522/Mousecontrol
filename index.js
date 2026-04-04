@@ -182,6 +182,19 @@ async function attemptConnection() {
         } catch (e) {
             throw new Error("Subscribe Failed: " + e.message);
         }
+
+        // Potential Profiling
+        if (config.profile) {
+            const profiles = await client.queryProfiles();
+            const profileExists = profiles.find(p => p.name === config.profile);
+            if (profileExists) {
+                await client.loadProfile(config.profile);
+                io.emit('status-update', { profileLoaded: config.profile });
+            } else {
+                console.warn(`Profile '${config.profile}' not found in Emotiv account.`);
+                io.emit('headset-status', { connected: true, warning: `Profile '${config.profile}' not found.` });
+            }
+        }
         
         isConnecting = false;
     } catch (err) {
@@ -264,6 +277,35 @@ io.on('connection', (socket) => {
         } catch (err) {
             console.error("Re-initialization failed:", err.message);
             io.emit('headset-status', { connected: false, error: err.message });
+        }
+    });
+
+    socket.on('get-profiles', async () => {
+        try {
+            if (!client.authToken) {
+                return socket.emit('profiles-list', { error: "Not authenticated" });
+            }
+            const profiles = await client.queryProfiles();
+            socket.emit('profiles-list', { profiles });
+        } catch (err) {
+            console.error("Failed to query profiles:", err.message);
+            socket.emit('profiles-list', { error: err.message });
+        }
+    });
+
+    socket.on('select-profile', async (profileName) => {
+        try {
+            const success = await client.loadProfile(profileName);
+            if (success) {
+                config.profile = profileName;
+                fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+                io.emit('status-update', { profileLoaded: profileName, profile: profileName });
+            } else {
+                socket.emit('profile-error', { error: "Failed to load profile" });
+            }
+        } catch (err) {
+            console.error("Profile selection failed:", err.message);
+            socket.emit('profile-error', { error: err.message });
         }
     });
 });

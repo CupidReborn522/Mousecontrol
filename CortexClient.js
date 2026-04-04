@@ -94,7 +94,20 @@ class CortexClient {
             status: "open"
         });
         this.sessionId = result.id;
+        this.headsetId = headset;
         return result;
+    }
+    
+    async loadProfile(profileName) {
+        try {
+            console.log(`Attempting to load profile: ${profileName}`);
+            await this.setupProfile(profileName, "load");
+            console.log(`Profile ${profileName} loaded successfully.`);
+            return true;
+        } catch (e) {
+            console.error(`Failed to load profile ${profileName}:`, e.message);
+            return false;
+        }
     }
 
     async subscribe(streams) {
@@ -102,6 +115,21 @@ class CortexClient {
             cortexToken: this.authToken,
             session: this.sessionId,
             streams
+        });
+    }
+
+    async queryProfiles() {
+        return await this.sendRequest("queryProfiles", {
+            cortexToken: this.authToken
+        });
+    }
+
+    async setupProfile(profileName, status) {
+        return await this.sendRequest("setupProfile", {
+            cortexToken: this.authToken,
+            profile: profileName,
+            status: status,
+            headset: this.headsetId
         });
     }
 
